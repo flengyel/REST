@@ -1,0 +1,9 @@
+# Don't include python directories
+bin
+include
+lib
+# Don't include process-related files
+nohup.out
+pid
+*.gdbc
+*.pyc
