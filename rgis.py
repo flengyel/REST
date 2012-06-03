@@ -3,6 +3,7 @@ from subprocess import Popen, PIPE
 from reverseproxied import ReverseProxied
 from string import rstrip
 import json
+from random import randrange,shuffle
 
 app = Flask(__name__)
 app.wsgi_app = ReverseProxied(app.wsgi_app)
@@ -43,6 +44,17 @@ def AfricaElevation15sec(lat,lon):
     lst = p.stdout.read().split()
     return json.dumps({rstrip(lst[0],':'):lst[1]})
 
+# This is a test
+@app.route('/Africa/Niger/Upstream/<lat>/<lon>/<cell>')
+def AfricaNigerUpstream(lat,lon,cell):
+    try:
+	i = int(cell)
+    except ValueError:
+	i = 500	
+    n = randrange(i,max(i+1,6001))
+    gridcells = range(i,n)
+    shuffle(gridcells)
+    return json.dumps({ 'Upstream' : gridcells })
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0')

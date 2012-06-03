@@ -28,6 +28,8 @@ curl http://localhost:5000/elev/4.025/11.0802
 
 curl http://localhost:5000/Africa/Elevation/15sec/4.025/11.0802
 
+curl http://localhost:5000/Africa/Niger/Upstream/4.025/11.0802/5
+
 
 # kill the server process
 kill $(<pid)
