@@ -9,8 +9,9 @@ if __name__ == '__main__':
     print "Loading records..."
     sr = sh.shapeRecords()
     rec0 = sr[0]
-    print len(rec0.shape.points), " points: ", rec0.shape.points
-    print len(rec0.record), " record: ", rec0.record
+    print "shapeType: ", rec0.shape.shapeType
+    print len(rec0.shape.points), "points: ", rec0.shape.points
+    print len(rec0.record), "record: ", rec0.record
     for sr in sh.shapeRecords():
 	print "ID: ", sr.record[7]
 	print "NAME:", sr.record[8]
