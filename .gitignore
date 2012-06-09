@@ -7,6 +7,11 @@ nohup.out
 pid
 *.gdbc
 *.py[co]
+# Exclude data directories
+NigerShapefiles
+# Don't include Dropbox conflicts
+*(*conflicted*)*.py
+
 
 # Packages
 *.egg
