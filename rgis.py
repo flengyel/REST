@@ -54,7 +54,7 @@ def AfricaNigerUpstream(lat,lon,cell):
 	cellno = int(cell)
     except ValueError:
 	return json.dumps({ "Upstream": [] })	
-    return json.dumps(traverse(maps,cellno)
+    return json.dumps(traverse(maps,cellno))
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0')
