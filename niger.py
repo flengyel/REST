@@ -11,6 +11,10 @@ def latlonstr(lat,lon):
 def shapeID(sr):
     return sr.record[7]	# a magic number 
 
+# Return the Stahler stream order of the segment
+def streamOrder(sr):
+    return sr.record[11] # another magic number.
+
 # the points [[a,b],[c,d]] data structure represents
 # a vector from the upstream coordinate to the downstream
 # coordinate
@@ -24,25 +28,28 @@ def downstream(rec):
     latlon = rec.shape.points[1]
     return latlonstr(latlon[0],latlon[1])
 
-# create initial upstream coordinate -> cell map
-# and cell -> coordinate pair map
-def pass1(shapes):
+# create initial upstream coordinate -> shape map
+# and shape ID -> coordinate pair map
+# Include only shapes with stream order > order
+def pass1(shapes, order):
     dct = dict()
     pntMap = dict()
     for rec in shapes.shapeRecords():
-	tgt = upstream(rec)
-        sID = shapeID(rec)
-	dct[tgt] = [sID]    # target goes to segment shape ID and empty list
-        pntMap[sID] = rec.shape.points
+        if streamOrder(rec) > order:
+	    tgt = upstream(rec)
+            sID = shapeID(rec)
+	    dct[tgt] = [sID]    # target goes to segment shape ID and empty list
+            pntMap[sID] = rec.shape.points
     return (dct, pntMap)
 
-def pass2(shapes, dct):
+def pass2(shapes, dct, order):
     for rec in shapes.shapeRecords():
-	src = downstream(rec)
-	if src in dct:
-	    IDlist = dct[src]
-            IDlist.append(shapeID(rec)) # gotcha: this modifies the list and returns none
-	    dct[src] = IDlist 
+        if streamOrder(rec) > order:
+	    src = downstream(rec)
+	    if src in dct:
+	        IDlist = dct[src]
+                IDlist.append(shapeID(rec)) 
+	        dct[src] = IDlist 
     return dct	 
 	
 def pass3(dct):
@@ -52,10 +59,10 @@ def pass3(dct):
       idmap[IDlist[0]] = IDlist[1:]   # make the first map to the rest
     return idmap
 
-def preprocess(shapefilename):
+def preprocess(shapefilename, order):
     sh = shapefile.Reader(shapefilename)
-    maps = pass1(sh)
-    return (pass3(pass2(sh, maps[0])), maps[1]) # id -> [upstream list], id -> [[upstream coords[,[downstream coords]]
+    maps = pass1(sh, order)
+    return (pass3(pass2(sh, maps[0], order)), maps[1]) # id -> [upstream list], id -> [[upstream coords[,[downstream coords]]
 
 # the breadth first search should import this
 def loadmaps(pickleFile):
@@ -65,7 +72,8 @@ def loadmaps(pickleFile):
     return maps
 
 if __name__ == '__main__':
-    maps = preprocess("Niger_River_Active_1min.shp")
+    # assume Strahler stream order at least 4
+    maps = preprocess("Niger_River_Active_1min.shp", 4)
     mapfile = open("NigerRiverDict", "w")  # write dictionaries
     pickle.dump(maps, mapfile)
     mapfile.close()

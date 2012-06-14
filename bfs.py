@@ -25,7 +25,7 @@ def	traverse(maps, key):
 			q.put(k)
 
 if __name__ == '__main__':
-	t = { 1 : [2, 3], 2 : [4, 5], 3 : [6], 4 : [], 5 : [], 6 : [] }
-	bfs(t, 1)
+#	t = { 1 : [2, 3], 2 : [4, 5], 3 : [6], 4 : [], 5 : [], 6 : [] }
+#	bfs(t, 1)
         maps = loadmaps("NigerRiverDict")
-        traverse(maps, 85102)
+        traverse(maps, 220)
