@@ -40,7 +40,7 @@ def	traverseStrahler(maps, key, order):
         # JSON dumps won't work with a list of lists directly!
                   "coords" : [[seg[0][0],seg[0][1]],[seg[1][0],seg[1][1]]] } )
 		for k in tree[node]:
-		    if k[1] > order:
+		    if k[1] >= order:
 			q.put(k[0])
         return { "Upstream" : maplist }
 
@@ -51,5 +51,5 @@ if __name__ == '__main__':
 #	bfs(t, 1)
         maps = loadmaps("NigerShapefiles/NigerRiverDict")
         print traverse(maps, 220)
-	bigmap = loadmaps("NigerShapefiles/NigerRiverDictionary")
-	print traverseStrahler(bigmap, 220, 4)  # this should be the same
+#	bigmap = loadmaps("NigerShapefiles/NigerRiverDictionary")
+#	print traverseStrahler(bigmap, 220, 4)  # this should be the same

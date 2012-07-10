@@ -5,9 +5,10 @@ from string import rstrip
 import json
 from random import randrange,shuffle
 from niger import loadmaps
-from bfs import traverse
+from bfs import traverse, traverseStrahler
 
 maps = loadmaps("NigerShapefiles/NigerRiverDict")
+ordermaps = loadmaps("NigerShapefiles/NigerRiverDictionary")
 
 app = Flask(__name__)
 app.wsgi_app = ReverseProxied(app.wsgi_app)
@@ -55,6 +56,16 @@ def AfricaNigerUpstream(lat,lon,cell):
     except ValueError:
 	return json.dumps({ "Upstream": [] })	
     return json.dumps(traverse(maps,cellno))
+
+# load the correct maps
+@app.route('/Africa/Niger/Upstream/Order/<lat>/<lon>/<cell>/<order>')
+def AfricaNigerUpstreamOrder(lat,lon,cell,order):
+    try:
+	cellno = int(cell)
+        ordno  = int(order)    
+    except ValueError:
+	return json.dumps({ "Upstream": [] })	
+    return json.dumps(traverseStrahler(ordermaps,cellno,ordno))
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0')
