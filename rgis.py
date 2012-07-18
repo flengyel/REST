@@ -6,7 +6,7 @@ from reverseproxied import ReverseProxied
 from string import rstrip
 import json
 from random import randrange,shuffle
-from niger import loadmaps
+from preprocess  import loadmaps
 from bfs import traverse, traverseStrahler
 from loaddata import loadIDdictionary
 
