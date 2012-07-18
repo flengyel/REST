@@ -1,3 +1,5 @@
+#!/usr/bin/python
+from __future__ import division
 from flask import Flask
 from subprocess import Popen, PIPE
 from reverseproxied import ReverseProxied
@@ -6,9 +8,11 @@ import json
 from random import randrange,shuffle
 from niger import loadmaps
 from bfs import traverse, traverseStrahler
+from loaddata import loadIDdictionary
 
-maps = loadmaps("NigerShapefiles/NigerRiverDict")
+#maps = loadmaps("NigerShapefiles/NigerRiverDict")
 ordermaps = loadmaps("NigerShapefiles/NigerRiverDictionary")
+idct = loadIDdictionary('NigerShapefiles/NigerIDCropD2550.txt')
 
 app = Flask(__name__)
 app.wsgi_app = ReverseProxied(app.wsgi_app)
@@ -49,13 +53,13 @@ def AfricaElevation15sec(lat,lon):
     lst = p.stdout.read().split()
     return json.dumps({rstrip(lst[0],':'):lst[1]})
 
-@app.route('/Africa/Niger/Upstream/<lat>/<lon>/<cell>')
-def AfricaNigerUpstream(lat,lon,cell):
-    try:
-	cellno = int(cell)
-    except ValueError:
-	return json.dumps({ "Upstream": [] })	
-    return json.dumps(traverse(maps,cellno))
+#@app.route('/Africa/Niger/Upstream/<lat>/<lon>/<cell>')
+#def AfricaNigerUpstream(lat,lon,cell):
+#   try:
+#	cellno = int(cell)
+#    except ValueError:
+#	return json.dumps({ "Upstream": [] })	
+#    return json.dumps(traverse(maps,cellno))
 
 # load the correct maps
 @app.route('/Africa/Niger/Upstream/Order/<lat>/<lon>/<cell>/<order>')
@@ -67,5 +71,45 @@ def AfricaNigerUpstreamOrder(lat,lon,cell,order):
 	return json.dumps({ "Upstream": [] })	
     return json.dumps(traverseStrahler(ordermaps,cellno,ordno))
 
+@app.route('/Africa/Niger/Upstream/Cropland/<cell>')
+def AfricaNigerUpstreamCropland(cell):
+    try:
+        l = idct[cell]
+    except  KeyError:
+        return json.dumps({ "Cropland": -9999 })   
+    print l[0]
+    return json.dumps({ "Cropland":l[0]})
+
+
+@app.route('/Africa/Niger/Upstream/Discharge/<cell>')
+def AfricaNigerUpstreamQ(cell):
+    try:
+        l = idct[cell]
+    except  KeyError:
+        return json.dumps({ "Discharge": -9999 })   
+    print l[1]
+    return json.dumps({ "Discharge":l[1]})
+
+
+@app.route('/Africa/Niger/Upstream/Discharge25/<cell>')
+def AfricaNigerUpstreamQ25(cell):
+    try:
+        l = idct[cell]
+    except  KeyError:
+        return json.dumps({ "Discharge": -9999 })   
+    print l[2]
+    return json.dumps({ "Discharge25":l[2]})
+
+@app.route('/Africa/Niger/Upstream/Discharge50/<cell>')
+def AfricaNigerUpstreamQ50(cell):
+    try:
+        l = idct[cell]
+    except  KeyError:
+        return json.dumps({ "Discharge": -9999 })   
+    print l[3]
+    return json.dumps({ "Discharge50":l[3]})
+
+
+    
 if __name__ == '__main__':
     app.run(host='0.0.0.0')
