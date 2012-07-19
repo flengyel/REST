@@ -12,7 +12,7 @@ from loaddata import loadIDdictionary
 
 #maps = loadmaps("NigerShapefiles/NigerRiverDict")
 ordermaps = loadmaps("NigerShapefiles/NigerRiverDictionary")
-idct = loadIDdictionary('NigerShapefiles/NigerIDCropD2550.txt')
+idct = loadIDdictionary('NigerShapefiles/ID2q+q25+q50+pop+crop.txt')
 
 app = Flask(__name__)
 app.wsgi_app = ReverseProxied(app.wsgi_app)
@@ -22,20 +22,9 @@ app.wsgi_app = ReverseProxied(app.wsgi_app)
 def list_functions():
     return 'netAccumulate'
 
-@app.route('/ls')
-def ls_app():
-    return Popen('ls', stdout=PIPE,shell=True).stdout.read()
-
 
 bindir='/usr/local/share/ghaas/bin/'
 pntgridvalue=bindir+'pntGridValue ' # note the space afterwards
-
-@app.route('/netAccumulate')
-def netacc():
-    p=Popen(bindir+'netAccumulate --help',stdout=PIPE,stderr=PIPE,shell=True)
-    print p.wait()
-    return p.stdout.read() + p.stderr.read()
-
 
 @app.route('/elev/<lat>/<lon>')
 def elev(lat,lon):
@@ -71,44 +60,33 @@ def AfricaNigerUpstreamOrder(lat,lon,cell,order):
 	return json.dumps({ "Upstream": [] })	
     return json.dumps(traverseStrahler(ordermaps,cellno,ordno))
 
-@app.route('/Africa/Niger/Upstream/Cropland/<cell>')
-def AfricaNigerUpstreamCropland(cell):
+def cell2json(name,idx,cell):
     try:
-        l = idct[cell]
+        lst = idct[cell]
     except  KeyError:
-        return json.dumps({ "Cropland": -9999 })   
-    print l[0]
-    return json.dumps({ "Cropland":l[0]})
+        return json.dumps({ name : -9999 })   
+    return json.dumps({ name:lst[idx]})
 
 
 @app.route('/Africa/Niger/Upstream/Discharge/<cell>')
 def AfricaNigerUpstreamQ(cell):
-    try:
-        l = idct[cell]
-    except  KeyError:
-        return json.dumps({ "Discharge": -9999 })   
-    print l[1]
-    return json.dumps({ "Discharge":l[1]})
-
+    return cell2json("Discharge",0,cell)
 
 @app.route('/Africa/Niger/Upstream/Discharge25/<cell>')
 def AfricaNigerUpstreamQ25(cell):
-    try:
-        l = idct[cell]
-    except  KeyError:
-        return json.dumps({ "Discharge": -9999 })   
-    print l[2]
-    return json.dumps({ "Discharge25":l[2]})
-
+    return cell2json("Discharge25",1,cell)
+    
 @app.route('/Africa/Niger/Upstream/Discharge50/<cell>')
 def AfricaNigerUpstreamQ50(cell):
-    try:
-        l = idct[cell]
-    except  KeyError:
-        return json.dumps({ "Discharge": -9999 })   
-    print l[3]
-    return json.dumps({ "Discharge50":l[3]})
+    return cell2json("Discharge50",2,cell)
 
+@app.route('/Africa/Niger/Upstream/Population/<cell>')
+def AfricaNigerUpstreamPopulation(cell):
+    return cell2json("Population",3,cell)
+
+@app.route('/Africa/Niger/Upstream/Cropland/<cell>')
+def AfricaNigerUpstreamCropland(cell):
+    return cell2json("Cropland",4,cell)
 
     
 if __name__ == '__main__':

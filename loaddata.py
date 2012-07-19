@@ -10,11 +10,12 @@ def loadIDdictionary(fname):
     dct = dict()
     for line in open(fname,'r'):
 	l = line.split()
-        if len(l) == 5: 
- 	    ID,cropland,q,q25,q50 = [x for x in l]
-	    dct[ID] = (float(cropland),float(q),float(q25),float(q50))
+        if len(l) == 6: 
+ 	    ID,q,q25,q50,pop,crop = [x for x in l]
+	    dct[ID] = (float(q),float(q25),float(q50),float(pop),float(crop))
     return dct
 
 if __name__ == '__main__':
-    dct = loadIDdictionary('NigerShapefiles/NigerIDCropD2550.txt')
+    dct = loadIDdictionary('NigerShapefiles/ID2q+q25+q50+pop+crop.txt')
     print dct['220']
+    print dct['2202']
