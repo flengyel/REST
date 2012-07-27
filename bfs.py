@@ -53,10 +53,10 @@ def	traverseStrahlerRedis(r, key, order):
 	q.put(key)
 	while not q.empty():
 		node = q.get()
-		seg = json.loads(r.get(IDkey('nigerPtMap', node))) 
+		seg = json.loads(r.get(IDkey('n', node))) 
 		maplist.append( { "id": node, "coords" : seg } )
-		upstream = json.loads(r.get(IDkey('niger', node)))
-		for k in upstream:
+		upnodes = json.loads(r.get(node))
+		for k in upnodes:
 		    if k[1] >= order:
 			q.put(k[0])
         return { "Upstream" : maplist }

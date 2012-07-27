@@ -59,7 +59,7 @@ def pass1(r, shapes):
     	tgt = upstream(rec)
         sID = shapeID(rec)
 	dct[tgt] = [sID]    # target goes to segment shape ID and empty list
-        r.set(IDkey('nigerPtMap',sID), seg2json(rec))
+        r.set(IDkey('n',sID), seg2json(rec))
     return dct
 
 # So far no upstream (id, ORDER) pairs have been appended
@@ -79,11 +79,12 @@ def pass3(r, dct):
     print 'Pass 3: Convert dictionary to redis map niger:ID -> [[id, strahler order],...]'
     for item in dct:
       IDlist = dct[item]
-      r.set(IDkey('niger',IDlist[0]), json.dumps(IDlist[1:]))
+      r.set(IDlist[0], json.dumps(IDlist[1:]))
 
 def preprocess(shapefilename):
     """Load redis client, read shapefile and create redis dictionary mappings"""
     print 'Starting redis client'
+    # one possibility is to use two databases, one for segments and one for the tree
     r = redis.StrictRedis(host='localhost',port=6379,db=0)
     print 'Reading shapefile'
     sh = shapefile.Reader('Niger_River_Active_1min.shp')
