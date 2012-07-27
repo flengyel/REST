@@ -2,6 +2,8 @@
 # preprocess ESRI shape file for 1min resolution niger river network
 import shapefile
 import cPickle as pickle     # dump and load data structures
+import json		     # encode data structures with json strings
+import redis                 # so tha redis can store them efficiently
 
 # !EEE 64 bit numbers
 def latlonstr(lat,lon):
@@ -28,6 +30,17 @@ def downstream(rec):
     latlon = rec.shape.points[1]
     return latlonstr(latlon[0],latlon[1])
 
+def IDkey(name,ID):
+    """create 'name:ID'"""
+    return name+':'+str(ID)
+
+def seg2json(rec):
+    """Create json string corresponding to rec.shape.points"""
+    seg = rec.shape.points
+    # json needs this list structure spelled out -- it cannot parse floats in lists  
+    # TypeError: [6.074999809265137, 4.391670227050781] is not JSON serializable
+    return json.dumps([[seg[0][0], seg[0][1]], [seg[1][0], seg[1][1]]])
+
 # create two dictionaries dct and pntMap
 # dct maps an upstream coordinate to  [ID (upstreamID, order), (upstreamID, order),...]
 # and the map pntMap, which maps a shape ID to a coordinate pair map
@@ -36,18 +49,23 @@ def downstream(rec):
 # and returns an ID -> [(upstream ID, order), (upstream ID, order), ... ] pairs so that
 # the recursive loop can decide whether to include these.
 
-def pass1(shapes):
+# given a redis database r and a shapefile structure shapes
+# return the dictionary but save the nigermap in redis
+
+def pass1(r, shapes):
     dct = dict()
-    pntMap = dict()
+    print 'Pass 1: create redis map ID -> [[ux,uy],[dx,dy]]'
     for rec in shapes.shapeRecords():
     	tgt = upstream(rec)
         sID = shapeID(rec)
 	dct[tgt] = [sID]    # target goes to segment shape ID and empty list
-        pntMap[sID] = rec.shape.points
-    return (dct, pntMap)
+        r.set(IDkey('nigerPtMap',sID), seg2json(rec))
+    return dct
 
 # So far no upstream (id, ORDER) pairs have been appended
 def pass2(shapes, dct):
+    """Pass 2: create dictionary ID -> [[id, strahler],...]"""
+    print "Pass 2: create dictionary ID -> [[id, strahler],...]"
     for rec in shapes.shapeRecords():
 	src = downstream(rec)
 	if src in dct:
@@ -56,18 +74,22 @@ def pass2(shapes, dct):
 	    dct[src] = IDlist 
     return dct	 
 	
-def pass3(dct):
-    idmap = dict()
+def pass3(r, dct):
+    """Map ID -> upstream id, stream order pairs in redis"""
+    print 'Pass 3: Convert dictionary to redis map niger:ID -> [[id, strahler order],...]'
     for item in dct:
       IDlist = dct[item]
-      idmap[IDlist[0]] = IDlist[1:]   # make the first map to the rest
-    return idmap
+      r.set(IDkey('niger',IDlist[0]), json.dumps(IDlist[1:]))
 
 def preprocess(shapefilename):
-    sh = shapefile.Reader(shapefilename)
-    maps = pass1(sh)
-    return (pass3(pass2(sh, maps[0])), maps[1]) # id -> [upstream list], id -> [[upstream coords[,[downstream coords]]
+    """Load redis client, read shapefile and create redis dictionary mappings"""
+    print 'Starting redis client'
+    r = redis.StrictRedis(host='localhost',port=6379,db=0)
+    print 'Reading shapefile'
+    sh = shapefile.Reader('Niger_River_Active_1min.shp')
+    pass3(r, pass2(sh, pass1(r, sh)))
 
+# no longer needed -- maps stored in redis
 # the breadth first search should import this
 def loadmaps(pickleFile):
     mapfile = open(pickleFile, "r")
@@ -76,9 +98,6 @@ def loadmaps(pickleFile):
     return maps
 
 if __name__ == '__main__':
-    maps = preprocess("Niger_River_Active_1min.shp")
-    mapfile = open("NigerRiverDictionary", "w")  # write dictionaries
-    pickle.dump(maps, mapfile)
-    mapfile.close()
+    preprocess("Niger_River_Active_1min.shp")
     exit(0)
 

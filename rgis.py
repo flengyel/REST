@@ -1,17 +1,20 @@
 #!/usr/bin/python
 from __future__ import division
+import json
+import redis
 from flask import Flask
 from subprocess import Popen, PIPE
 from reverseproxied import ReverseProxied
 from string import rstrip
-import json
 from random import randrange,shuffle
-from preprocess  import loadmaps
-from bfs import traverse, traverseStrahler
+from preprocess  import loadmaps,IDkey
+from bfs import traverse, traverseStrahler, traverseStrahlerRedis
 #from loaddata import loadIDdictionary
 from idmap import IDmap
 
-ordermaps = loadmaps("NigerShapefiles/NigerRiverDictionary")
+# redis appears to be slower than loading maps from
+# cPickle!
+#ordermaps = loadmaps("NigerShapefiles/NigerRiverDictionary")
 
 myfields = ['ID', 'q_dist_1m_annual' , 'q_dist25_1m_annual', 'q_dist50_1m_annual',	
                 'CropLandAreaAcc','Pop2000','PopAcc2000','Runoff-01','Runoff-02','Runoff-03',
@@ -32,6 +35,8 @@ myfields = ['ID', 'q_dist_1m_annual' , 'q_dist25_1m_annual', 'q_dist50_1m_annual
 		'Discharge50-11','Discharge50-12']
 
 idmap = IDmap('NigerShapefiles/NigerRiverActive1m.txt',myfields)
+r     = redis.StrictRedis(host='localhost', port=6379, db=0)
+#r     = redis.StrictRedis(unix_socket_path='/tmp/redis.sock', db=0)
 
 app = Flask(__name__)
 app.wsgi_app = ReverseProxied(app.wsgi_app)
@@ -77,7 +82,7 @@ def AfricaNigerUpstreamOrder(lat,lon,cell,order):
         ordno  = int(order)    
     except ValueError:
 	return json.dumps({ "Upstream": [] })	
-    return json.dumps(traverseStrahler(ordermaps,cellno,ordno))
+    return json.dumps(traverseStrahlerRedis(r,cellno,ordno))
 
 def cell2json(cell,name,fld):
     return json.dumps({ name:idmap.field(cell,fld)})

@@ -1,7 +1,9 @@
 #!/usr/bin/python
 # implement breadth first search with queues
 import Queue
-from   niger import loadmaps
+import redis
+import json
+from   preprocess import loadmaps,IDkey
 
 # upstream traversal creates a map whose key is 
 # "Upstream" and whose values are a list of maps of the form 
@@ -44,12 +46,33 @@ def	traverseStrahler(maps, key, order):
 			q.put(k[0])
         return { "Upstream" : maplist }
 
+# traverse with threshold
+def	traverseStrahlerRedis(r, key, order):
+        maplist = []
+	q = Queue.Queue()
+	q.put(key)
+	while not q.empty():
+		node = q.get()
+		seg = json.loads(r.get(IDkey('nigerPtMap', node))) 
+		maplist.append( { "id": node, "coords" : seg } )
+		upstream = json.loads(r.get(IDkey('niger', node)))
+		for k in upstream:
+		    if k[1] >= order:
+			q.put(k[0])
+        return { "Upstream" : maplist }
+
+
 
 
 if __name__ == '__main__':
 #	t = { 1 : [2, 3], 2 : [4, 5], 3 : [6], 4 : [], 5 : [], 6 : [] }
 #	bfs(t, 1)
-        maps = loadmaps("NigerShapefiles/NigerRiverDict")
-        print traverse(maps, 220)
+#       print 'Loading cPickle map'
 #	bigmap = loadmaps("NigerShapefiles/NigerRiverDictionary")
-#	print traverseStrahler(bigmap, 220, 4)  # this should be the same
+        print 'Connecting to redis'
+	r = redis.StrictRedis(host='localhost', port=6379, db=0)
+        print 'Traversal 1'
+        print traverseStrahlerRedis(r, 16340, 5)
+#       maps = loadmaps("NigerShapefiles/NigerRiverDict")
+#       print traverse(maps, 220)
+#	print traverseStrahler(bigmap, 1640, 5)  # this should be the same
