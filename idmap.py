@@ -1,6 +1,9 @@
 #!/usr/bin/python
 from __future__ import division
 import collections
+# type annotation obsolete.
+#from pyanno import returnType, parameterTypes, privateMethod, protectedMethod, selfType, ignoreType
+
 
 # given 
 #    fname: the filename of an RGIS created ascii river network with an ID to grid sampled data values
@@ -37,7 +40,8 @@ class IDmap(object):
                string = string[1:-1]     # remove the double quotations at the beginning and end
                fieldmap[string] = i # note the field number in the RGIS file
         else:   
-           ID = lst[fieldmap['ID']]
+           ID = lst[fieldmap['ID']]      # subtlety: the type is a string. A dictionary 
+                                         # interprets a unicode ket as a string apparently 
            for field in self.myfields[1:]:   
 	       try:
                   v = float(lst[fieldmap[field]])
@@ -52,13 +56,13 @@ class IDmap(object):
     for i in range(len(self.myfields[1:])):
        self.tuplemap[self.myfields[1:][i]] = i
 
-
   def tuple(self,ID): 
-     return self.idmap[ID] # This violates OOP
+     return self.idmap[str(ID)] # This violates OOP
 
+  
   def field(self,ID,field):
      try:
-        t = self.idmap[ID] # get the tuple
+        t = self.idmap[str(ID)] # get the tuple -- this is defensive.
      except KeyError:
         return self.NOVALUE
      try:
@@ -92,10 +96,7 @@ if __name__ == '__main__':
 		'Discharge50-11','Discharge50-12']
 
     idmap = IDmap('NigerShapefiles/NigerRiverActive1m.txt', myfields) 
-    print idmap.tuple('220')  
-    print zip(myfields[1:], idmap.tuple('220'))
-    print idmap.field('220','CropLandAreaAcc')
-    print idmap.field('220','q_dist_1m_annual')
-    print idmap.field('220','bogus')
-    print idmap.field('232165','CropLandAreaAcc')    
+    print idmap.tuple('2')  
+    print zip(myfields[1:], idmap.tuple('2'))
+    print idmap.field('2','q_dist_1m_annual')
 

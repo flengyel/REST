@@ -34,13 +34,23 @@ myfields = ['ID', 'q_dist_1m_annual' , 'q_dist25_1m_annual', 'q_dist50_1m_annual
 		'Discharge50-07','Discharge50-08','Discharge50-09','Discharge50-10',	
 		'Discharge50-11','Discharge50-12']
 
-idmap = IDmap('NigerShapefiles/NigerRiverActive1m.txt',myfields)
+
 r     = redis.StrictRedis(host='localhost', port=6379, db=0)
-#r     = redis.StrictRedis(unix_socket_path='/tmp/redis.sock', db=0)
+myidmap = IDmap('NigerShapefiles/NigerRiverActive1m.txt',myfields)
 
 app = Flask(__name__)
 app.wsgi_app = ReverseProxied(app.wsgi_app)
 
+def cell2json(cell,name,fld):
+    print "cell2json cell type:", type(cell)
+    return json.dumps({ name:myidmap.field(cell,fld)})
+
+# this seems tobe necessary...perhaps annotation is masking idmap?
+# no..maybe the name idmap is masked??
+# Probably a fucking type error. I need type annotations.
+def c2f(cell,fld):
+    print "c2f cell type:", type(cell)
+    return myidmap.field(cell,fld)
 
 @app.route('/')
 def list_functions():
@@ -50,12 +60,6 @@ def list_functions():
 bindir='/usr/local/share/ghaas/bin/'
 pntgridvalue=bindir+'pntGridValue ' # note the space afterwards
 
-@app.route('/elev/<lat>/<lon>')
-def elev(lat,lon):
-    p=Popen(bindir+'pntGridValue Net+Elevation_15s.gdbc -c '+lat+','+lon, stdout=PIPE,stderr=PIPE,shell=True)
-    print p.wait()
-    lst = p.stdout.read().split()
-    return json.dumps({rstrip(lst[0],':'):lst[1]})
 
 @app.route('/Africa/Elevation/15sec/<lat>/<lon>')
 def AfricaElevation15sec(lat,lon):
@@ -66,15 +70,7 @@ def AfricaElevation15sec(lat,lon):
     lst = p.stdout.read().split()
     return json.dumps({rstrip(lst[0],':'):lst[1]})
 
-#@app.route('/Africa/Niger/Upstream/<lat>/<lon>/<cell>')
-#def AfricaNigerUpstream(lat,lon,cell):
-#   try:
-#	cellno = int(cell)
-#    except ValueError:
-#	return json.dumps({ "Upstream": [] })	
-#    return json.dumps(traverse(maps,cellno))
 
-# load the correct maps
 @app.route('/Africa/Niger/Upstream/Order/<lat>/<lon>/<cell>/<order>')
 def AfricaNigerUpstreamOrder(lat,lon,cell,order):
     try:
@@ -84,10 +80,29 @@ def AfricaNigerUpstreamOrder(lat,lon,cell,order):
 	return json.dumps({ "Upstream": [] })	
     return json.dumps(traverseStrahlerRedis(r,cellno,ordno))
 
-def cell2json(cell,name,fld):
-    return json.dumps({ name:idmap.field(cell,fld)})
 
-
+@app.route('/Africa/Niger/Scenario/Annual/BOD/<int:cell>/<int:irr>/<int:wwt>')
+def AfricaNigerScenarioAnnualBOD(cell, irr, wwt):
+    NOVALUE = -9999.0
+    DISCHARGE = ['q_dist_1m_annual', 'q_dist25_1m_annual', 'q_dist50_1m_annual']         
+    BODCOD = [0.15, 0, 0.3, 0.75, 0.85]
+    BOD5 = 11
+    retval = { "BOD" : NOVALUE }
+    if irr < 0 or irr > 2 or wwt < 0 or wwt > 4:
+        return json.dumps(retval)
+    # Christ -- dynamic typing strikes again. The cell used to index 
+    # is a string?!?
+    Q = c2f(cell,DISCHARGE[irr])    
+#    print 'Q',Q, 1-BODCOD[wwt],irr, DISCHARGE[irr], cell, c2f(2, 'q_dist_1m_annual')
+    if Q == NOVALUE:
+        return json.dumps(retval)
+    try:
+        retval["BOD"] = BOD5 * 100000 / Q * (1 - BODCOD[wwt]) 
+    except ZeroDivisionError:
+        return json.dumps(retval)
+    return json.dumps(retval)
+ 
+   
 @app.route('/Africa/Niger/Discharge/Annual/<cell>')
 def AfricaNigerUpstreamQ(cell):
     return cell2json(cell,'Discharge','q_dist_1m_annual')
@@ -143,15 +158,5 @@ def AfricaNigerDischarge50Monthly(cell,mm):
     return cell2json(cell, fieldname, fieldname)
 
 
-#@app.route('/Africa/Niger/Upstream/PopByCrop/<cell>')
-#def AfricaNigerUpstreamPopByCrop(cell):
-#    try:
-#        lst = idct[cell]
-#    except  KeyError:
-#        return json.dumps({ name : -9999 })   
-#    return json.dumps({ "PopByCrop":lst[3]/lst[4]})
-    
-
-    
 if __name__ == '__main__':
     app.run(host='0.0.0.0')
