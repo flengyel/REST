@@ -53,12 +53,19 @@ def	traverseStrahlerRedis(r, key, order):
 	q.put(key)
 	while not q.empty():
 		node = q.get()
-		seg = json.loads(r.get(IDkey('n', node))) 
-		maplist.append( { "id": node, "coords" : seg } )
-		upnodes = json.loads(r.get(node))
-		for k in upnodes:
-		    if k[1] >= order:
-			q.put(k[0])
+		seg = r.lrange(IDkey('n', node),0,-1) 
+		maplist.append( { "id": int(node), 
+                             "coords" :  [[float(seg[0]),float(seg[1])],
+                                          [float(seg[1]),float(seg[3])]] } )
+                upnodes = r.lrange(node, 0, -1)
+                ordtoggle = False
+		for item in upnodes:
+                    if ordtoggle:
+                        if int(item) >= order:
+                           q.put(lastnode)
+                    else:
+                        lastnode = item    
+		    ordtoggle = not ordtoggle
         return { "Upstream" : maplist }
 
 
@@ -72,7 +79,8 @@ if __name__ == '__main__':
         print 'Connecting to redis'
 	r = redis.StrictRedis(host='localhost', port=6379, db=0)
         print 'Traversal 1'
-        print traverseStrahlerRedis(r, 16340, 5)
+        print traverseStrahlerRedis(r, 220, 7)
+        print traverseStrahlerRedis(r, 1650, 7)
 #       maps = loadmaps("NigerShapefiles/NigerRiverDict")
 #       print traverse(maps, 220)
 #	print traverseStrahler(bigmap, 1640, 5)  # this should be the same
