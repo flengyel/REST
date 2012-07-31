@@ -56,7 +56,7 @@ def	traverseStrahlerRedis(r, key, order):
 		seg = r.lrange(IDkey('n', node),0,-1) 
 		maplist.append( { "id": int(node), 
                              "coords" :  [[float(seg[0]),float(seg[1])],
-                                          [float(seg[1]),float(seg[3])]] } )
+                                          [float(seg[2]),float(seg[3])]] } )
                 upnodes = r.lrange(node, 0, -1)
                 ordtoggle = False
 		for item in upnodes:
