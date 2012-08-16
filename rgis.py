@@ -81,12 +81,13 @@ def AfricaNigerUpstreamOrder(lat,lon,cell,order):
     return json.dumps(traverseStrahler(ordermaps,cellno,ordno))
 
 
+DISCHARGE = ['q_dist_1m_annual', 'q_dist25_1m_annual', 'q_dist50_1m_annual']         
+BODCOD = [0.15, 0, 0.3, 0.75, 0.85]
+BOD5 = 11
+NOVALUE = -9999.0
+
 @app.route('/Africa/Niger/Scenario/Annual/BOD/<int:cell>/<int:irr>/<int:wwt>')
 def AfricaNigerScenarioAnnualBOD(cell, irr, wwt):
-    NOVALUE = -9999.0
-    DISCHARGE = ['q_dist_1m_annual', 'q_dist25_1m_annual', 'q_dist50_1m_annual']         
-    BODCOD = [0.15, 0, 0.3, 0.75, 0.85]
-    BOD5 = 11
     retval = { "BOD" : NOVALUE }
     if irr < 0 or irr > 2 or wwt < 0 or wwt > 4:
         return json.dumps(retval)
@@ -102,6 +103,29 @@ def AfricaNigerScenarioAnnualBOD(cell, irr, wwt):
         return json.dumps(retval)
     return json.dumps(retval)
  
+
+def BODcalc(wwt,Q):
+    try:
+        loading = BOD5 * 100000 / Q * (1 - BODCOD[wwt])
+    except ZeroDivisionError:
+        return NOVALUE
+    return loading
+
+def BODmap(Q):
+    return { "wwt0": BODcalc(0,Q), "wwt1": BODcalc(1,Q), "wwt2": BODcalc(2,Q),
+             "wwt3": BODcalc(3,Q), "wwt4": BODcalc(4,Q) }
+
+def irrQ(cell,irr):
+    return c2f(cell,DISCHARGE[irr])    
+
+def BODCODmap(cell):
+    return { "irr0": BODmap(irrQ(cell,  0)), "irr25": BODmap(irrQ(cell, 1)), 
+              "irr50": BODmap(irrQ(cell, 2)) }
+    
+    
+@app.route('/Africa/Niger/Annual/BOD/<int:cell>')
+def AfricaNigerAnnualBOD(cell):
+    return json.dumps(BODCODmap(cell)) 
    
 @app.route('/Africa/Niger/Discharge/Annual/<cell>')
 def AfricaNigerUpstreamQ(cell):
