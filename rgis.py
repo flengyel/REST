@@ -14,7 +14,7 @@ from idmap import IDmap
 
 # redis appears to be slower than loading maps from
 # cPickle!
-#ordermaps = loadmaps("NigerShapefiles/NigerRiverDictionary")
+ordermaps = loadmaps("NigerShapefiles/NigerRiverDictionary")
 
 myfields = ['ID', 'q_dist_1m_annual' , 'q_dist25_1m_annual', 'q_dist50_1m_annual',	
                 'CropLandAreaAcc','Pop2000','PopAcc2000','Runoff-01','Runoff-02','Runoff-03',
@@ -35,21 +35,20 @@ myfields = ['ID', 'q_dist_1m_annual' , 'q_dist25_1m_annual', 'q_dist50_1m_annual
 		'Discharge50-11','Discharge50-12']
 
 
+# Use redis 2.6+. Redis 2.4.9 (used by cartodb) does not support StrictRedis().
 r     = redis.StrictRedis(host='localhost', port=6379, db=0)
+
 myidmap = IDmap('NigerShapefiles/NigerRiverActive1m.txt',myfields)
 
 app = Flask(__name__)
 app.wsgi_app = ReverseProxied(app.wsgi_app)
 
 def cell2json(cell,name,fld):
-    print "cell2json cell type:", type(cell)
+#   print "cell2json cell type:", type(cell)
     return json.dumps({ name:myidmap.field(cell,fld)})
 
-# this seems tobe necessary...perhaps annotation is masking idmap?
-# no..maybe the name idmap is masked??
-# Probably a fucking type error. I need type annotations.
 def c2f(cell,fld):
-    print "c2f cell type:", type(cell)
+#   print "c2f cell type:", type(cell)
     return myidmap.field(cell,fld)
 
 @app.route('/')
@@ -78,7 +77,8 @@ def AfricaNigerUpstreamOrder(lat,lon,cell,order):
         ordno  = int(order)    
     except ValueError:
 	return json.dumps({ "Upstream": [] })	
-    return json.dumps(traverseStrahlerRedis(r,cellno,ordno))
+#   return json.dumps(traverseStrahlerRedis(r,cellno,ordno))
+    return json.dumps(traverseStrahler(ordermaps,cellno,ordno))
 
 
 @app.route('/Africa/Niger/Scenario/Annual/BOD/<int:cell>/<int:irr>/<int:wwt>')
