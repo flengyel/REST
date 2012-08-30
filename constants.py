@@ -3,6 +3,7 @@ from __future__ import division
 
 class Const:
 	NOVALUE = -9999.0
+	SHAPEFILE='Niger_River_Active_1min.shp'
 	DICTIONARY='NigerShapefiles/NigerRiverDictionary'
 	DATABASE='NigerShapefiles/NigerRiverActive1mA.txt'
 	FIELDS = ['ID', 'q_dist_1m_annual' , 'q_dist25_1m_annual', 'q_dist50_1m_annual',	

@@ -151,6 +151,6 @@ def loadmaps(pickleFile):
 
 if __name__ == '__main__':
 #    preprocess("Niger_River_Active_1min.shp")
-    preprocessA("Niger_River_Active_1min.shp")
+    preprocessA(Const.SHAPEFILE)
     exit(0)
 
