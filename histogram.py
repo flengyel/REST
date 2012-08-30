@@ -26,7 +26,9 @@ def	traverseStrahler(maps, key, order):
 			q.put(k[0])
         return { "Upstream" : maplist }
 
-def	histo(maps, myIDmap, key, order, myField, bins):
+NOVALUE=-9999  # a magic number. Consolodate these.
+
+def	_histo1(maps, myIDmap, key, order, myField, bins):
 	tree=maps[0]
 	nodelist=[]
 	q = Queue.Queue()
@@ -45,6 +47,10 @@ def	histo(maps, myIDmap, key, order, myField, bins):
 			if k[1] >= order:
 				q.put(k[0])
 	width = (maxi-mini)/bins
+	# correct if the min and max values are equal
+	if width <= 0:
+		width=1
+		bins=1
 	return ( count, width, bins, mini, maxi, nodelist )		
 
 # borrowed from stackoverflow, where it was named batch_gen
@@ -56,7 +62,7 @@ def iterate_by_n(data, n):
     for i in range(0, len(data), n):
             yield data[i:i+n]
 
-def	histo2(arglist):
+def	_histo2(arglist):
 	count, width, bins, mini, maxi, nodelist = arglist
 	frequencies = [0]*bins
 	endpoints   = [mini]*(bins+1)
@@ -75,6 +81,9 @@ def	histo2(arglist):
 	    frequencies[index] += 1
 	    IDValueBinMap.append((ID, value, index))    
 	return (frequencies, endpoints, IDValueBinMap)
+
+def	histogram(maps, myIDmap, key, order, myField, bins):
+	return _histo2(_histo1(maps, myIDmap, key, order, myField, bins))
 
 if __name__ == '__main__':
 #	t = { 1 : [2, 3], 2 : [4, 5], 3 : [6], 4 : [], 5 : [], 6 : [] }
@@ -103,7 +112,7 @@ if __name__ == '__main__':
 	print 'loading IDmap'
 	myIDmap = IDmap('NigerShapefiles/NigerRiverActive1m.txt',myfields)
 	print 'testing 1st pass of histogram'
-	arglist =  histo(maps,myIDmap, 7549, 5, 'CropLandAreaAcc',3) 
+	arglist =  _histo1(maps,myIDmap, 7549, 5, 'CropLandAreaAcc',3) 
 	print arglist
 	print 'testing 2nd pass of histogram'
-	print histo2(arglist)
+	print _histo2(arglist)

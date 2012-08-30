@@ -93,10 +93,11 @@ if __name__ == '__main__':
 		'Discharge25-11','Discharge25-12','Discharge50-01','Discharge50-02',
 		'Discharge50-03','Discharge50-04','Discharge50-05','Discharge50-06',	
 		'Discharge50-07','Discharge50-08','Discharge50-09','Discharge50-10',	
-		'Discharge50-11','Discharge50-12']
+		'Discharge50-11','Discharge50-12','GRUMP_Pop_2000']
 
-    idmap = IDmap('NigerShapefiles/NigerRiverActive1m.txt', myfields) 
+    idmap = IDmap('NigerShapefiles/NigerRiverActive1mA.txt', myfields) 
     print idmap.tuple('2')  
     print zip(myfields[1:], idmap.tuple('2'))
     print idmap.field('2','q_dist_1m_annual')
+    print idmap.field('2','GRUMP_Pop_2000')
 
