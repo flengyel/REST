@@ -1,16 +1,16 @@
 #!/usr/bin/python
-from __future__ import division
+from   __future__ import division
+from   constants import Const
 import json
 import redis
-from flask import Flask
-from subprocess import Popen, PIPE
-from reverseproxied import ReverseProxied
-from string import rstrip
-from random import randrange,shuffle
-from preprocess  import loadmaps,IDkey
-from bfs import traverse, traverseStrahler, traverseStrahlerRedis
-#from loaddata import loadIDdictionary
-from idmap import IDmap
+from   flask import Flask
+from   subprocess import Popen, PIPE
+from   reverseproxied import ReverseProxied
+from   string import rstrip
+from   random import randrange,shuffle
+from   preprocess  import loadmaps
+from   bfs import traverse, traverseStrahler, traverseStrahlerRedis
+from   idmap import IDmap
 
 # redis appears to be slower than loading maps from
 # cPickle!

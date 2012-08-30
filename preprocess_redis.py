@@ -142,13 +142,6 @@ def preprocessA(shapefilename):
     sh = shapefile.Reader(Const.SHAPEFILE)
     pass3a(r, pass2a(sh, pass1a(r, sh)))
 
-# no longer needed -- maps stored in redis
-# the breadth first search should import this
-def loadmaps(pickleFile):
-    mapfile = open(pickleFile, "r")
-    maps =  pickle.load(mapfile)
-    mapfile.close()
-    return maps
 
 if __name__ == '__main__':
 #    preprocess("Niger_River_Active_1min.shp")
