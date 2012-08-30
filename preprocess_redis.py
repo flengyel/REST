@@ -1,7 +1,6 @@
 #!/usr/bin/python
 # preprocess ESRI shape file for 1min resolution niger river network
 import shapefile
-import cPickle as pickle     # dump and load data structures
 import json		     # encode data structures with json strings
 import redis                 # so that redis can store them efficiently
 from   constants import Const
@@ -53,16 +52,6 @@ def seg2json(rec):
 # given a redis database r and a shapefile structure shapes
 # return the dictionary but save the nigermap in redis
 
-def pass1(r, shapes):
-    dct = dict()
-    print 'Pass 1: create redis map ID -> [[ux,uy],[dx,dy]]'
-    for rec in shapes.shapeRecords():
-    	tgt = upstream(rec)
-        sID = shapeID(rec)
-	dct[tgt] = [sID]    # target goes to segment shape ID and empty list
-        r.set(IDkey('n',sID), seg2json(rec))
-    return dct
-
 def pushCoords(r, aKey, aRec):
     seg = aRec.shape.points
     r.rpush(aKey, seg[0][0]) 
@@ -71,7 +60,7 @@ def pushCoords(r, aKey, aRec):
     r.rpush(aKey, seg[1][1]) 
 
 
-def pass1a(r, shapes):
+def pass1(r, shapes):
     dct = dict()
     print 'Pass 1: create redis map ID -> [[ux,uy],[dx,dy]]'
     for rec in shapes.shapeRecords():
@@ -83,18 +72,6 @@ def pass1a(r, shapes):
 
 # So far no upstream (id, ORDER) pairs have been appended
 def pass2(shapes, dct):
-    """Pass 2: create dictionary ID -> [[id, strahler],...]"""
-    print "Pass 2: create dictionary ID -> [[id, strahler],...]"
-    for rec in shapes.shapeRecords():
-	src = downstream(rec)
-	if src in dct:
-	    IDlist = dct[src]
-            IDlist.append((shapeID(rec), streamOrder(rec))) 
-	    dct[src] = IDlist 
-    return dct	 
-	
-# So far no upstream (id, ORDER) pairs have been appended
-def pass2a(shapes, dct):
     """Pass 2a: create dictionary ID -> [id, strahler,...]"""
     print "Pass 2: create dictionary ID -> [[id, strahler],...]"
     for rec in shapes.shapeRecords():
@@ -111,13 +88,6 @@ def pass3(r, dct):
     print 'Pass 3: Convert dictionary to redis map niger:ID -> [[id, strahler order],...]'
     for item in dct:
       IDlist = dct[item]
-      r.set(IDlist[0], json.dumps(IDlist[1:]))
-
-def pass3a(r, dct):
-    """Map ID -> upstream id, stream order pairs in redis"""
-    print 'Pass 3: Convert dictionary to redis map niger:ID -> [[id, strahler order],...]'
-    for item in dct:
-      IDlist = dct[item]
       IDstr = str(IDlist[0])
       for item in IDlist[1:]:
          r.rpush(IDstr, item)
@@ -128,23 +98,13 @@ def preprocess(shapefilename):
     print 'Starting redis client'
     # one possibility is to use two databases, one for segments and one for the tree
     r = redis.StrictRedis(host='localhost',port=6379,db=0)
+    r.flushdb()
     print 'Reading shapefile'
     sh = shapefile.Reader(Const.SHAPEFILE)
     pass3(r, pass2(sh, pass1(r, sh)))
 
-def preprocessA(shapefilename):
-    """Load redis client, read shapefile and create redis dictionary mappings"""
-    print 'Starting redis client'
-    # one possibility is to use two databases, one for segments and one for the tree
-    r = redis.StrictRedis(host='localhost',port=6379,db=0)
-    r.flushdb()
-    print 'Reading shapefile'
-    sh = shapefile.Reader(Const.SHAPEFILE)
-    pass3a(r, pass2a(sh, pass1a(r, sh)))
-
 
 if __name__ == '__main__':
-#    preprocess("Niger_River_Active_1min.shp")
-    preprocessA(Const.SHAPEFILE)
+    preprocess(Const.SHAPEFILE)
     exit(0)
 

@@ -3,7 +3,7 @@
 import Queue
 import redis
 import json
-from   preprocess import loadmaps,IDkey
+from   preprocess import loadmaps
 
 # upstream traversal creates a map whose key is 
 # "Upstream" and whose values are a list of maps of the form 
@@ -47,6 +47,7 @@ def	traverseStrahler(maps, key, order):
         return { "Upstream" : maplist }
 
 # traverse with threshold
+from    preprocess_redis import IDkey
 def	traverseStrahlerRedis(r, key, order):
         maplist = []
 	q = Queue.Queue()

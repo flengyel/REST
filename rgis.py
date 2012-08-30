@@ -2,7 +2,7 @@
 from   __future__ import division
 from   constants import Const
 import json
-import redis
+#import redis
 from   flask import Flask
 from   subprocess import Popen, PIPE
 from   reverseproxied import ReverseProxied
@@ -14,31 +14,12 @@ from   idmap import IDmap
 
 # redis appears to be slower than loading maps from
 # cPickle!
-ordermaps = loadmaps("NigerShapefiles/NigerRiverDictionary")
-
-myfields = ['ID', 'q_dist_1m_annual' , 'q_dist25_1m_annual', 'q_dist50_1m_annual',	
-                'CropLandAreaAcc','Pop2000','PopAcc2000','Runoff-01','Runoff-02','Runoff-03',
-                'Runoff-04','Runoff-05','Runoff-06','Runoff-07','Runoff-08','Runoff-09',
-                'Runoff-10','Runoff-11','Runoff-12','Runoff25-01','Runoff25-02','Runoff25-03',
-		'Runoff25-04','Runoff25-05','Runoff25-06','Runoff25-07','Runoff25-08',	
-                'Runoff25-09','Runoff25-10','Runoff25-11','Runoff25-12','Runoff50-01',
-        	'Runoff50-02','Runoff50-03','Runoff50-04','Runoff50-05','Runoff50-06',
-                'Runoff50-07','Runoff50-08','Runoff50-09','Runoff50-10','Runoff50-11',
-                'Runoff50-12','Discharge-01','Discharge-02','Discharge-03','Discharge-04',
-           	'Discharge-05','Discharge-06','Discharge-07','Discharge-08','Discharge-09',
-		'Discharge-10','Discharge-11','Discharge-12','Discharge25-01','Discharge25-02',
-		'Discharge25-03','Discharge25-04','Discharge25-05','Discharge25-06',
-		'Discharge25-07','Discharge25-08','Discharge25-09','Discharge25-10',
-		'Discharge25-11','Discharge25-12','Discharge50-01','Discharge50-02',
-		'Discharge50-03','Discharge50-04','Discharge50-05','Discharge50-06',	
-		'Discharge50-07','Discharge50-08','Discharge50-09','Discharge50-10',	
-		'Discharge50-11','Discharge50-12']
-
+ordermaps = loadmaps(Const.DICTIONARY)
 
 # Use redis 2.6+. Redis 2.4.9 (used by cartodb) does not support StrictRedis().
-r     = redis.StrictRedis(host='localhost', port=6379, db=0)
+#r     = redis.StrictRedis(host='localhost', port=6379, db=0)
 
-myidmap = IDmap('NigerShapefiles/NigerRiverActive1m.txt',myfields)
+myidmap = IDmap(Const.DATABASE, Const.FIELDS)
 
 app = Flask(__name__)
 app.wsgi_app = ReverseProxied(app.wsgi_app)
@@ -81,24 +62,20 @@ def AfricaNigerUpstreamOrder(lat,lon,cell,order):
     return json.dumps(traverseStrahler(ordermaps,cellno,ordno))
 
 
-DISCHARGE = ['q_dist_1m_annual', 'q_dist25_1m_annual', 'q_dist50_1m_annual']         
-BODCOD = [0.15, 0, 0.3, 0.75, 0.85]
-BOD5 = 11
-NOVALUE = -9999.0
 
 @app.route('/Africa/Niger/Scenario/Annual/BOD/<int:cell>/<int:irr>/<int:wwt>')
 def AfricaNigerScenarioAnnualBOD(cell, irr, wwt):
-    retval = { "BOD" : NOVALUE }
+    retval = { "BOD" : Const.NOVALUE }
     if irr < 0 or irr > 2 or wwt < 0 or wwt > 4:
         return json.dumps(retval)
     # Christ -- dynamic typing strikes again. The cell used to index 
     # is a string?!?
-    Q = c2f(cell,DISCHARGE[irr])    
+    Q = c2f(cell,Const.DISCHARGE[irr])    
 #    print 'Q',Q, 1-BODCOD[wwt],irr, DISCHARGE[irr], cell, c2f(2, 'q_dist_1m_annual')
-    if Q == NOVALUE:
+    if Q == Const.NOVALUE:
         return json.dumps(retval)
     try:
-        retval["BOD"] = BOD5 * 100000 / Q * (1 - BODCOD[wwt]) 
+        retval["BOD"] = Const.BOD5 * 100000 / Q * (1 - Const.BODCOD[wwt]) 
     except ZeroDivisionError:
         return json.dumps(retval)
     return json.dumps(retval)
@@ -106,9 +83,9 @@ def AfricaNigerScenarioAnnualBOD(cell, irr, wwt):
 
 def BODcalc(wwt,Q):
     try:
-        loading = BOD5 * 100000 / Q * (1 - BODCOD[wwt])
+        loading = Const.BOD5 * 100000 / Q * (1 - Const.BODCOD[wwt])
     except ZeroDivisionError:
-        return NOVALUE
+        return Const.NOVALUE
     return loading
 
 def BODmap(Q):
