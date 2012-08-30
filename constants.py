@@ -1,10 +1,10 @@
 #!/usr/bin/python
 from __future__ import division
 
-class const:
+class Const:
 	NOVALUE = -9999.0
-	NIGER_RIVER_DICTIONARY='NigerShapefiles/NigerRiverDictionary'
-	NIGER_RIVER_IDMAP='NigerShapefiles/NigerRiverActive1mA.txt'
+	DICTIONARY='NigerShapefiles/NigerRiverDictionary'
+	DATABASE='NigerShapefiles/NigerRiverActive1mA.txt'
 	FIELDS = ['ID', 'q_dist_1m_annual' , 'q_dist25_1m_annual', 'q_dist50_1m_annual',	
                 'CropLandAreaAcc','Pop2000','PopAcc2000','Runoff-01','Runoff-02','Runoff-03',
                 'Runoff-04','Runoff-05','Runoff-06','Runoff-07','Runoff-08','Runoff-09',
