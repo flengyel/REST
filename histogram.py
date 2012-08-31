@@ -9,8 +9,8 @@ from   constants import Const
 
 
 
-# traverse with threshold
-def	traverseStrahler(maps, key, order):
+# traverse with threshold (here for reference .. not needed)
+def	_traverseStrahler(maps, key, order):
 	tree = maps[0]
         pointmap = maps[1]
         maplist = []
@@ -65,10 +65,12 @@ def iterate_by_n(data, n):
 
 def	_histo2(arglist):
 	count, width, bins, mini, maxi, nodelist = arglist
+	print count, width, bins, mini, maxi
+
 	frequencies = [0]*bins
 	endpoints   = [mini]*(bins+1)
 
-        IDValueBinMap = []
+        IDValBinList = []
 	for i in range(bins):
 	    j = i+1
 	    endpoints[j] = endpoints[j]+j*width
@@ -80,10 +82,11 @@ def	_histo2(arglist):
 	    if index >= bins:
 		index = bins-1  # index correction -- this happens at the last interval
 	    frequencies[index] += 1
-	    IDValueBinMap.append((ID, value, index))    
-	return (frequencies, endpoints, IDValueBinMap)
+	    IDValBinList.append((ID, value, index))    
+	return (count, frequencies, endpoints, IDValBinList)
 
 def	histogram(maps, myIDmap, key, order, myField, bins):
+	"""Returns count, freq array, bin endpints, (ID, Value, Bin) list"""
 	return _histo2(_histo1(maps, myIDmap, key, order, myField, bins))
 
 if __name__ == '__main__':
@@ -92,11 +95,22 @@ if __name__ == '__main__':
         print 'Loading cPickle map'
 	maps = loadmaps(Const.DICTIONARY)
 	print 'cPickle map loaded'
-        print traverseStrahler(maps, 7549, 5)
+        print _traverseStrahler(maps, 7549, 5)
 	print 'loading IDmap'
 	myIDmap = IDmap(Const.DATABASE, Const.FIELDS)
-	print 'testing 1st pass of histogram'
-	arglist =  _histo1(maps,myIDmap, 7549, 5, 'GRUMP_Pop_2000',5) 
-	print arglist
-	print 'testing 2nd pass of histogram'
-	print _histo2(arglist)
+#	print 'testing 1st pass of histogram'
+#	arglist =  _histo1(maps,myIDmap, 7549, 5, 'GRUMP_Pop_2000',5) 
+#	print arglist
+#	print 'testing 2nd pass of histogram'
+#	count, frequencies, endpoints, _ = _histo2(arglist)
+#	print _histo2(arglist)
+	import numpy
+	import pylab
+#	count, frequencies, endpoints, _ = histogram(maps, myIDmap, 202, 3, 'GRUMP_Pop_2000', 50)
+# bad field produces error case of 0 1 1 -9999.0 -9999.0
+#	count, frequencies, endpoints, _ = histogram(maps, myIDmap, 202, 3, 'runoff_10', 50)
+	count,frequencies, endpoints, _ = histogram(maps, myIDmap, 202, 3, 'Runoff-10', 50)
+	ends = numpy.array(endpoints)
+	freqs = numpy.array(frequencies)
+	pylab.plot(.5*(ends[1:]+ends[:-1]),freqs/count)
+	pylab.show()
