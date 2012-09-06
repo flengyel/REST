@@ -105,12 +105,24 @@ if __name__ == '__main__':
 #	count, frequencies, endpoints, _ = _histo2(arglist)
 #	print _histo2(arglist)
 	import numpy
-	import pylab
+	import pylab as p
 #	count, frequencies, endpoints, _ = histogram(maps, myIDmap, 202, 3, 'GRUMP_Pop_2000', 50)
 # bad field produces error case of 0 1 1 -9999.0 -9999.0
 #	count, frequencies, endpoints, _ = histogram(maps, myIDmap, 202, 3, 'runoff_10', 50)
-	count,frequencies, endpoints, _ = histogram(maps, myIDmap, 202, 3, 'Runoff-10', 50)
+	count,frequencies, endpoints, _ = histogram(maps, myIDmap, 202, 3, 'Runoff-10', 25)
 	ends = numpy.array(endpoints)
 	freqs = numpy.array(frequencies)
-	pylab.plot(.5*(ends[1:]+ends[:-1]),freqs/count)
-	pylab.show()
+        x = .5*(ends[1:]+ends[:-1])
+        y = freqs/count
+
+	# basic uninteresting plot
+	#pylab.plot(x,y)
+	#pylab.show()
+	
+	# plot barchart with a red line
+	p.plot(x, y, 'r', linewidth=1)
+	p.bar(x,y,align='center', width=5) 
+	p.title('Histogram of runoff')
+	p.xlabel('Runoff')
+	p.ylabel('Probability') 
+	p.show()
