@@ -5,7 +5,7 @@ class Const:
 	NOVALUE = -9999.0
 	SHAPEFILE='NigerShapefiles/Niger_River_Active_1min.shp'
 	DICTIONARY='NigerShapefiles/NigerRiverDictionary'
-	DATABASE='NigerShapefiles/NigerRiverActive1mA.txt'
+	DATABASE='NigerShapefiles/NigerRiverActive1mB.txt'
 	FIELDS = ['ID', 'q_dist_1m_annual' , 'q_dist25_1m_annual', 'q_dist50_1m_annual',	
                 'CropLandAreaAcc','Pop2000','PopAcc2000','Runoff-01','Runoff-02','Runoff-03',
                 'Runoff-04','Runoff-05','Runoff-06','Runoff-07','Runoff-08','Runoff-09',
@@ -22,7 +22,7 @@ class Const:
 		'Discharge25-11','Discharge25-12','Discharge50-01','Discharge50-02',
 		'Discharge50-03','Discharge50-04','Discharge50-05','Discharge50-06',	
 		'Discharge50-07','Discharge50-08','Discharge50-09','Discharge50-10',	
-		'Discharge50-11','Discharge50-12','GRUMP_Pop_2000']
+		'Discharge50-11','Discharge50-12','GRUMP_Pop_2000', 'RamCropland2000Km2']
 	DISCHARGE = ['q_dist_1m_annual', 'q_dist25_1m_annual', 'q_dist50_1m_annual']         
 	BODCOD = [0.15, 0, 0.3, 0.75, 0.85]
 	BOD5 = 11

@@ -118,7 +118,15 @@ if __name__ == '__main__':
 	# basic uninteresting plot
 	#pylab.plot(x,y)
 	#pylab.show()
-	
+
+	print 'Runoff Oct 2000 at ID 220'
+	print 'count:', count
+	print 'frequencies:',frequencies
+	print 'bin endpoints:', endpoints
+	print 'derived output:'
+	print 'bin midpoints:', x
+	print 'proportions within each bin:', y
+
 	# plot barchart with a red line
 	p.plot(x, y, 'r', linewidth=1)
 	p.bar(x,y,align='center', width=5) 
