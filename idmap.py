@@ -83,4 +83,8 @@ if __name__ == '__main__':
     print zip(Const.FIELDS[1:], idmap.tuple('2'))
     print idmap.field('2','q_dist_1m_annual')
     print idmap.field('2','GRUMP_Pop_2000')
+    print idmap.field('1','RamCropland2000Km2')
+    print idmap.field('2','RamCropland2000Km2')
+    print idmap.field('3','RamCropland2000Km2')
+    print idmap.field('20','RamCropland2000Km2')
 

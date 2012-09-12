@@ -134,3 +134,19 @@ if __name__ == '__main__':
 	p.xlabel('Runoff')
 	p.ylabel('Probability') 
 	p.show()
+
+# This has NOVALUE in a few segments	
+	count,frequencies, endpoints, _ = histogram(maps, myIDmap, 1, 3, 'RamCropland2000Km2', 25)
+	ends = numpy.array(endpoints)
+	freqs = numpy.array(frequencies)
+        x = .5*(ends[1:]+ends[:-1])
+        y = freqs/count
+
+	# plot barchart with a red line
+	p.plot(x, y, 'r', linewidth=1)
+	p.bar(x,y,align='center', width=0.1) 
+	p.title('Histogram of cropland area')
+	p.xlabel('Area')
+	p.ylabel('Proportion') 
+	p.show()
+
