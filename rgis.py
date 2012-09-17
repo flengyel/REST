@@ -81,29 +81,48 @@ def AfricaNigerScenarioAnnualBOD(cell, irr, wwt):
     return json.dumps(retval)
  
 
-def BODcalc(wwt,Q):
+def WWTcalc(load, removal, wwt,Q):
     try:
-        loading = Const.BOD5 * 100000 / Q * (1 - Const.BODCOD[wwt])
+        loading = load * 100000 / Q * (1 - removal[wwt])
     except ZeroDivisionError:
         return Const.NOVALUE
     return loading
 
-def BODmap(Q):
-    return { "wwt0": BODcalc(0,Q), "wwt1": BODcalc(1,Q), "wwt2": BODcalc(2,Q),
-             "wwt3": BODcalc(3,Q), "wwt4": BODcalc(4,Q) }
+def WWTmap(load,Q):
+    return { "wwt0": WWTcalc(load,removal,0,Q), 
+             "wwt1": WWTcalc(load,removal,1,Q), 
+	     "wwt2": WWTcalc(load,removal,2,Q),
+             "wwt3": WWTcalc(load,removal,3,Q), 
+	     "wwt4": WWTcalc(load,removal,4,Q) }
 
 def irrQ(cell,irr):
     return c2f(cell,DISCHARGE[irr])    
 
-def BODCODmap(cell):
-    return { "irr0": BODmap(irrQ(cell,  0)), "irr25": BODmap(irrQ(cell, 1)), 
-              "irr50": BODmap(irrQ(cell, 2)) }
+
+def WWTmatrix(load,removal,cell):
+    """load is the load factor BOD5 or COD"""
+    return { "irr0":   WWTmap(load,removal,irrQ(cell,  0)), 
+	     "irr25":  WWTmap(load,removal,irrQ(cell, 1)), 
+             "irr50":  WWTmap(load,removal,irrQ(cell, 2)) }
     
     
 @app.route('/Africa/Niger/Annual/BOD/<int:cell>')
 def AfricaNigerAnnualBOD(cell):
-    return json.dumps(BODCODmap(cell)) 
+    return json.dumps(WWTmatrix(Const.BOD5,Const.BODCOD,cell)) 
    
+@app.route('/Africa/Niger/Annual/COD/<int:cell>')
+def AfricaNigerAnnualCOD(cell):
+    return json.dumps(WWTmatrix(Const.COD,Const.BODCOD,cell)) 
+
+@app.route('/Africa/Niger/Annual/NITROGEN/<int:cell>')
+def AfricaNigerAnnualCOD(cell):
+    return json.dumps(WWTmatrix(Const.TotNITROGEN,Const.NITROGEN,cell)) 
+
+@app.route('/Africa/Niger/Annual/PHOSPHOROUS/<int:cell>')
+def AfricaNigerAnnualCOD(cell):
+    return json.dumps(WWTmatrix(Const.TotPHOSPHOROUS,Const.NITROGEN,cell)) 
+
+
 @app.route('/Africa/Niger/Discharge/Annual/<cell>')
 def AfricaNigerUpstreamQ(cell):
     return cell2json(cell,'Discharge','q_dist_1m_annual')

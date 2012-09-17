@@ -25,5 +25,10 @@ class Const:
 		'Discharge50-11','Discharge50-12','GRUMP_Pop_2000', 'RamCropland2000Km2']
 	DISCHARGE = ['q_dist_1m_annual', 'q_dist25_1m_annual', 'q_dist50_1m_annual']         
 	BODCOD = [0.15, 0, 0.3, 0.75, 0.85]
+	NITROGEN = [0.15, 0, 0.1, 0.25, 0.7]
 	BOD5 = 11
+	COD  = 36.5
+	TotNITROGEN = 3.7
+	TotPHOSPHOROUS = 0.9
+
 
