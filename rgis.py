@@ -2,6 +2,8 @@
 from   __future__ import division
 from   constants import Const
 import json
+import sys
+import numpy  # for array
 #import redis
 from   flask import Flask
 from   subprocess import Popen, PIPE
@@ -11,26 +13,27 @@ from   random import randrange,shuffle
 from   preprocess  import loadmaps
 from   bfs import traverse, traverseStrahler, traverseStrahlerRedis
 from   idmap import IDmap
+from   histogram import histogram
 
 # redis appears to be slower than loading maps from
 # cPickle!
-ordermaps = loadmaps(Const.DICTIONARY)
+myMaps = loadmaps(Const.DICTIONARY)
 
 # Use redis 2.6+. Redis 2.4.9 (used by cartodb) does not support StrictRedis().
 #r     = redis.StrictRedis(host='localhost', port=6379, db=0)
 
-myidmap = IDmap(Const.DATABASE, Const.FIELDS)
+myIDmap = IDmap(Const.DATABASE, Const.FIELDS)
 
 app = Flask(__name__)
 app.wsgi_app = ReverseProxied(app.wsgi_app)
 
 def cell2json(cell,name,fld):
 #   print "cell2json cell type:", type(cell)
-    return json.dumps({ name:myidmap.field(cell,fld)})
+    return json.dumps({ name:myIDmap.field(cell,fld)})
 
 def c2f(cell,fld):
-#   print "c2f cell type:", type(cell)
-    return myidmap.field(cell,fld)
+#    print >> sys.stderr, "c2f cell type:", type(cell), "cell:", cell, 'field:', fld
+    return myIDmap.field(cell,fld)
 
 @app.route('/')
 def list_functions():
@@ -59,27 +62,9 @@ def AfricaNigerUpstreamOrder(lat,lon,cell,order):
     except ValueError:
 	return json.dumps({ "Upstream": [] })	
 #   return json.dumps(traverseStrahlerRedis(r,cellno,ordno))
-    return json.dumps(traverseStrahler(ordermaps,cellno,ordno))
+    return json.dumps(traverseStrahler(myMaps,cellno,ordno))
 
 
-
-@app.route('/Africa/Niger/Scenario/Annual/BOD/<int:cell>/<int:irr>/<int:wwt>')
-def AfricaNigerScenarioAnnualBOD(cell, irr, wwt):
-    retval = { "BOD" : Const.NOVALUE }
-    if irr < 0 or irr > 2 or wwt < 0 or wwt > 4:
-        return json.dumps(retval)
-    # Christ -- dynamic typing strikes again. The cell used to index 
-    # is a string?!?
-    Q = c2f(cell,Const.DISCHARGE[irr])    
-#    print 'Q',Q, 1-BODCOD[wwt],irr, DISCHARGE[irr], cell, c2f(2, 'q_dist_1m_annual')
-    if Q == Const.NOVALUE:
-        return json.dumps(retval)
-    try:
-        retval["BOD"] = Const.BOD5 * 100000 / Q * (1 - Const.BODCOD[wwt]) 
-    except ZeroDivisionError:
-        return json.dumps(retval)
-    return json.dumps(retval)
- 
 
 def WWTcalc(load, removal, wwt,Q):
     try:
@@ -88,7 +73,7 @@ def WWTcalc(load, removal, wwt,Q):
         return Const.NOVALUE
     return loading
 
-def WWTmap(load,Q):
+def WWTmap(load,removal,Q):
     return { "wwt0": WWTcalc(load,removal,0,Q), 
              "wwt1": WWTcalc(load,removal,1,Q), 
 	     "wwt2": WWTcalc(load,removal,2,Q),
@@ -96,7 +81,7 @@ def WWTmap(load,Q):
 	     "wwt4": WWTcalc(load,removal,4,Q) }
 
 def irrQ(cell,irr):
-    return c2f(cell,DISCHARGE[irr])    
+    return c2f(cell,Const.DISCHARGE[irr])    
 
 
 def WWTmatrix(load,removal,cell):
@@ -115,12 +100,30 @@ def AfricaNigerAnnualCOD(cell):
     return json.dumps(WWTmatrix(Const.COD,Const.BODCOD,cell)) 
 
 @app.route('/Africa/Niger/Annual/NITROGEN/<int:cell>')
-def AfricaNigerAnnualCOD(cell):
+def AfricaNigerAnnualNitrogen(cell):
     return json.dumps(WWTmatrix(Const.TotNITROGEN,Const.NITROGEN,cell)) 
 
 @app.route('/Africa/Niger/Annual/PHOSPHOROUS/<int:cell>')
-def AfricaNigerAnnualCOD(cell):
+def AfricaNigerAnnualPhosphorous(cell):
     return json.dumps(WWTmatrix(Const.TotPHOSPHOROUS,Const.NITROGEN,cell)) 
+
+#### Basic Histograms ####
+# histogram(maps, myIDmap, key, order, myField, bins):
+# def histog"""Returns count, freq array, bin endpoints, (ID, Value, Bin) list"""
+@app.route('/Africa/Niger/Hist/<int:cell>/<int:order>/<field>/<int:bins>')
+def AfricaNigerHistogram(cell,order,field,bins):
+    count, frequencies, endpoints, _ = histogram(myMaps, myIDmap, cell, order,field, bins)
+    ends = numpy.array(endpoints)
+    midpoints = 0.5*(ends[1:]+ends[:-1])
+    freqs = numpy.array(frequencies)
+    props = freqs/count
+    # NOTE: numpy.array([...]) is not JSON serializable; convert to list
+    return json.dumps({ 'id' : cell, 'count' : count, 
+                        'freqs': frequencies,
+                        'endpoints' : endpoints, 
+	                'midpoints' : list(midpoints), 
+                        'proportions' : list(props) })
+
 
 
 @app.route('/Africa/Niger/Discharge/Annual/<cell>')
@@ -179,4 +182,5 @@ def AfricaNigerDischarge50Monthly(cell,mm):
 
 
 if __name__ == '__main__':
+    app.debug=True
     app.run(host='0.0.0.0')
