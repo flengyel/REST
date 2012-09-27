@@ -4,6 +4,8 @@ import Queue
 import redis
 import json
 from   preprocess import loadmaps
+from   quickhull import qhull
+from   constants import Const
 
 # upstream traversal creates a map whose key is 
 # "Upstream" and whose values are a list of maps of the form 
@@ -75,13 +77,13 @@ def	traverseStrahlerRedis(r, key, order):
 if __name__ == '__main__':
 #	t = { 1 : [2, 3], 2 : [4, 5], 3 : [6], 4 : [], 5 : [], 6 : [] }
 #	bfs(t, 1)
-#       print 'Loading cPickle map'
-#	bigmap = loadmaps("NigerShapefiles/NigerRiverDictionary")
-        print 'Connecting to redis'
-	r = redis.StrictRedis(host='localhost', port=6379, db=0)
-        print 'Traversal 1'
-        print traverseStrahlerRedis(r, 220, 7)
-        print traverseStrahlerRedis(r, 1650, 7)
 #       maps = loadmaps("NigerShapefiles/NigerRiverDict")
 #       print traverse(maps, 220)
-#	print traverseStrahler(bigmap, 1640, 5)  # this should be the same
+        print 'Loading cPickle map'
+	bigmap = loadmaps(Const.DICTIONARY)
+	print traverseStrahler(bigmap, 1640, 5)  # this should be the same
+#       print 'Connecting to redis'
+##	r = redis.StrictRedis(host='localhost', port=6379, db=0)
+#       print 'Traversal 1'
+#       print traverseStrahlerRedis(r, 220, 7)
+#       print traverseStrahlerRedis(r, 1650, 7)
