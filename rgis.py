@@ -11,7 +11,7 @@ from   reverseproxied import ReverseProxied
 from   string import rstrip
 from   random import randrange,shuffle
 from   preprocess  import loadmaps
-from   bfs import traverse, traverseStrahler, traverseStrahlerRedis
+from   bfs import traverse, traverseStrahler, subbasinPerimeter
 from   idmap import IDmap
 from   histogram import histogram
 
@@ -64,6 +64,9 @@ def AfricaNigerUpstreamOrder(lat,lon,cell,order):
 #   return json.dumps(traverseStrahlerRedis(r,cellno,ordno))
     return json.dumps(traverseStrahler(myMaps,cellno,ordno))
 
+@app.route('/Africa/Niger/Subbasin/<int:cell>/<int:order>')
+def AfricaNigerSubbasin(cell, order):
+    return json.dumps(subbasinPerimeter(myMaps, cell, order))
 
 
 def WWTcalc(load, removal, wwt,Q):

@@ -65,7 +65,7 @@ def subbasinPerimeter(maps, key, order):
 		for k in tree[node]:
 		    if k[1] >= order:
 		        q.put(k[0])
-	print "Number of points:", len(subbasin)
+	#print "Number of points:", len(subbasin)
 	# now we have the subbasin. Apply qhull and return the polygon
 	return { 'polygon': qhull(array(subbasin)).tolist() }
 
