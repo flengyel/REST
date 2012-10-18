@@ -4,6 +4,7 @@ import shapefile
 import cPickle as pickle     # dump and load data structures
 import json		     # encode data structures with json strings
 from   constants import Const
+from   osgeo import ogr      # load the Niger RIver boundary
 
 # !EEE 64 bit numbers
 def latlonstr(lat,lon):
@@ -72,10 +73,22 @@ def preprocess(shapefilename):
 
 # the breadth first search should import this
 def loadmaps(pickleFile):
-    mapfile = open(pickleFile, "r")
-    maps =  pickle.load(mapfile)
-    mapfile.close()
-    return maps
+  mapfile = open(pickleFile, "r")
+  maps =  pickle.load(mapfile)
+  mapfile.close()
+  # now load the 15 second Niger Basin boundary
+  driver = ogr.GetDriverByName("ESRI Shapefile")
+  # get data source object
+  dataSource = driver.Open(Const.SHAPEFILE15s, 0)
+  if dataSource is None:
+    print 'Could not open ' + Const.SHAPEFILE15s
+    sys.exit(1)
+  layer = dataSource.GetLayer(0)    # always 0 for ShapeFiles
+  feature  = layer.GetFeature(0)    # hope it contains the big polygon
+  geometry = feature.GetGeometryRef()
+  #ring  = geometry.GetGeometryRef(0)   # we want the geometry, not the ring it contains
+  return (maps[0], maps[1], geometry)   # This last is not a map, but we want
+                                    # compatibility with other code
 
 if __name__ == '__main__':
     maps = preprocess(Const.SHAPEFILE)

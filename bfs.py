@@ -1,12 +1,12 @@
 #!/usr/bin/python
 # implement breadth first search with queues
 import Queue
-#import redis
 import json
 from   preprocess import loadmaps
-from   quickhull import qhull
+#from   quickhull import qhull
 from   constants import Const
 from   numpy import array
+from   osgeo import ogr    # GDAL functions for ConvexHull() and Intersection()
 
 # upstream traversal creates a map whose key is 
 # "Upstream" and whose values are a list of maps of the form 
@@ -51,23 +51,35 @@ def	traverseStrahler(maps, key, order):
 
 # traverse with threshold and return perimeter of convex hull
 def subbasinPerimeter(maps, key, order):
-	"""Return perimeter of convex hull of subbasin """
-	tree = maps[0]
-	pointmap = maps[1]
-	subbasin = []
-	q = Queue.Queue()
-	q.put(key)
-	while not q.empty():
-		node = q.get()
-		seg = pointmap[node]
-		subbasin.append([seg[0][0],seg[0][1]])  # Lon Lat -- note reversal
-		subbasin.append([seg[1][0],seg[1][1]])   # Lon Lat -- note reversal
-		for k in tree[node]:
-		    if k[1] >= order:
-		        q.put(k[0])
-	#print "Number of points:", len(subbasin)
-	# now we have the subbasin. Apply qhull and return the polygon
-	return { 'polygon': qhull(array(subbasin)).tolist() }
+  """Return perimeter of convex hull of subbasin """
+  tree = maps[0]
+  pointmap = maps[1]
+  q = Queue.Queue()
+  q.put(key)
+  # create multipoiny geometry
+  multipoint = ogr.Geometry(ogr.wkbMultiPoint)
+  point = ogr.Geometry(ogr.wkbPoint)
+  while not q.empty():
+    node = q.get()
+    seg = pointmap[node]
+    point.AddPoint(seg[0][1], seg[0][0])  # Lon, Lat -- note reversal
+    multipoint.AddGeometry(point)
+    point.AddPoint(seg[1][1], seg[1][0])  # Lon, Lat -- note reversal
+    multipoint.AddGeometry(point)
+    for k in tree[node]:
+      if k[1] >= order:
+        q.put(k[0])
+  # now we have the subbasin. Apply ConvexHull and return the polygon
+  polygon = multipoint.ConvexHull()
+  ring = polygon.GetGeometryRef(0)
+  points = ring.GetPointCount()
+  # Convert to list
+  subbasin = []
+  for p in xrange(points):
+    lon, lat,  _ = ring.GetPoint(p)
+    subbasin.append([lat, lon])  # note reversal to lat lon!
+  return { 'polygon': subbasin }
+
 
 
 
@@ -104,7 +116,9 @@ if __name__ == '__main__':
 #       print traverse(maps, 220)
         print 'Loading cPickle map'
 	bigmap = loadmaps(Const.DICTIONARY)
+	print 'traversal'
 	print traverseStrahler(bigmap, 1640, 5)  # this should be the same
+	print 'perimeter'
 	print subbasinPerimeter(bigmap, 1640, 5)
 #       print 'Connecting to redis'
 ##	r = redis.StrictRedis(host='localhost', port=6379, db=0)
