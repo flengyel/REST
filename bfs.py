@@ -71,6 +71,18 @@ def subbasinPerimeter(maps, key, order):
         q.put(k[0])
   # now we have the subbasin. Apply ConvexHull and return the polygon
   polygon = multipoint.ConvexHull()
+  basin = maps[2]
+  print type(basin)
+  if polygon.Intersects(basin): 
+    bdry = basin.GetGeometryRef(0)
+    print basin.GetGeometryName(), bdry.GetGeometryName()
+    intersection = basin.Intersection(polygon)
+    count = intersection.GetGeometryCount()
+    print count
+    if count == 1:
+      print 'Intersection succeeds'
+      polygon = intersection
+
   ring = polygon.GetGeometryRef(0)
   points = ring.GetPointCount()
   # Convert to list

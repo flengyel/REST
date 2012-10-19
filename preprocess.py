@@ -86,8 +86,16 @@ def loadmaps(pickleFile):
   layer = dataSource.GetLayer(0)    # always 0 for ShapeFiles
   feature  = layer.GetFeature(0)    # hope it contains the big polygon
   geometry = feature.GetGeometryRef()
-  #ring  = geometry.GetGeometryRef(0)   # we want the geometry, not the ring it contains
-  return (maps[0], maps[1], geometry)   # This last is not a map, but we want
+  ring  = geometry.GetGeometryRef(0)   # we want the geometry, not the ring it contains
+  points = ring.GetPointCount()
+  newring = ogr.Geometry(ogr.wkbLinearRing) # create a new ring -- needed since the
+  for p in xrange(points):                  # data source geometry is destroyed
+    lon, lat, _ = ring.GetPoint(p)          # once the function exits
+    newring.AddPoint(lat, lon)
+  newgeom = ogr.Geometry(ogr.wkbPolygon)  # a new geometry must be created
+  newgeom.AddGeometry(newring)            # or the code will segfault
+  dataSource.Destroy()              # close the data source
+  return (maps[0], maps[1], newgeom)   # This last is not a map, but we want
                                     # compatibility with other code
 
 if __name__ == '__main__':
