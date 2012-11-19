@@ -91,11 +91,16 @@ def loadmaps(pickleFile):
   newring = ogr.Geometry(ogr.wkbLinearRing) # create a new ring -- needed since the
   for p in xrange(points):                  # data source geometry is destroyed
     lon, lat, _ = ring.GetPoint(p)          # once the function exits
-    newring.AddPoint(lat, lon)
+    newring.AddPoint(lat, lon)  # note reversal
   newgeom = ogr.Geometry(ogr.wkbPolygon)  # a new geometry must be created
   newgeom.AddGeometry(newring)            # or the code will segfault
   dataSource.Destroy()              # close the data source
-  return (maps[0], maps[1], newgeom)   # This last is not a map, but we want
+  downmap = {}	# invert the map. Note there is only one item downstream
+  for down in maps[0]:
+    for up in  maps[0][down]:   # up is a list of pairs [(id, strahler),...]
+      downmap[up[0]] = down
+  # downmap sends  ID to the unique ID downstream
+  return (maps[0], maps[1], newgeom, downmap)   
                                     # compatibility with other code
 
 if __name__ == '__main__':

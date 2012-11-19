@@ -50,7 +50,7 @@ def	traverseStrahler(maps, key, order):
         return { "Upstream" : maplist }
 
 # traverse with threshold and return perimeter of convex hull
-def subbasinPerimeter(maps, key, order):
+def subbasinPerimeter1(maps, key, order):
   """Return perimeter of convex hull of subbasin """
   tree = maps[0]
   pointmap = maps[1]
@@ -94,29 +94,81 @@ def subbasinPerimeter(maps, key, order):
 
 
 
+deg = 0.016666666666666
+hdeg = deg/2
 
-# traverse with threshold
-#from    preprocess_redis import IDkey
-#def	traverseStrahlerRedis(r, key, order):
-#        maplist = []
-#	q = Queue.Queue()
-#	q.put(key)
-#	 while not q.empty():
-#		node = q.get()
-#		seg = r.lrange(IDkey('n', node),0,-1) 
-#		maplist.append( { "id": int(node), 
-#                             "coords" :  [[float(seg[0]),float(seg[1])],
-#                                          [float(seg[2]),float(seg[3])]] } )
-#                upnodes = r.lrange(node, 0, -1)
-#                ordtoggle = False
-#		for item in upnodes:
-#                    if ordtoggle:
-#                        if int(item) >= order:
-#                           q.put(lastnode)
-#                    else:
-#                        lastnode = item    
-#		    ordtoggle = not ordtoggle
-#        return { "Upstream" : maplist }
+# This has a fudge factor to ensure overlap
+def	subbasin(maps, key, order):
+	tree = maps[0]
+        pointmap = maps[1]
+        maplist = []
+	q = Queue.Queue()
+	q.put(key)
+	while not q.empty():
+	    node = q.get()
+	    seg = pointmap[node]
+	    lat = seg[0][0]
+	    lon = seg[0][1]
+	    # json forces this on us
+	    maplist.append( {"polygon" : [[lat-hdeg, lon-hdeg], [lat-hdeg, lon+hdeg],
+			                  [lat+hdeg, lon+hdeg], [lat+hdeg, lon-hdeg]] } )
+	    for k in tree[node]:
+	        if k[1] >= order:
+		    q.put(k[0])
+        return { "multipolygon" : maplist }
+
+def gridPolygon(lon, lat):
+  ff = 0.0085
+  ring = ogr.Geometry(ogr.wkbLinearRing)
+  ring.AddPoint(lon-ff, lat-ff)
+  ring.AddPoint(lon+ff, lat-ff)
+  ring.AddPoint(lon+ff, lat+ff)
+  ring.AddPoint(lon-ff, lat+ff)
+  ring.CloseRings() 
+  poly = ogr.Geometry(ogr.wkbPolygon)
+  poly.AddGeometry(ring)
+  return poly
+  
+
+# traverse with threshold and return perimeter of littleboxes
+def subbasinPerimeter(maps, key, order):
+  """Return perimeter of subbasin """
+  order = max(order, 3)
+  tree = maps[0]
+  pointmap = maps[1]
+  q = Queue.Queue()
+  q.put(key)
+  seg = pointmap[key]
+  polygon = gridPolygon(seg[0][1], seg[0][0])
+  while not q.empty():
+    node = q.get()
+    seg = pointmap[node]
+    polygon = polygon.Union(gridPolygon(seg[0][1], seg[0][0]))
+    for k in tree[node]:
+      if k[1] >= order:
+        q.put(k[0])
+  # now we have the subbasin. See if it intersects
+#  basin = maps[2]
+#  print type(basin)
+#  if polygon.Intersects(basin): 
+#    bdry = basin.GetGeometryRef(0)
+#    print basin.GetGeometryName(), bdry.GetGeometryName()
+#    intersection = basin.Intersection(polygon)
+#    count = intersection.GetGeometryCount()
+#    print count
+#    if count == 1:
+#      print 'Intersection succeeds'
+#      polygon = intersection
+
+  ring = polygon.GetGeometryRef(0)
+  points = ring.GetPointCount()
+  # Convert to list
+  subbasin = []
+  for p in xrange(points):
+    lon, lat,  _ = ring.GetPoint(p)
+    subbasin.append([lat, lon])  # note reversal to lat lon!
+  return { 'polygon': subbasin }
+
 
 
 
