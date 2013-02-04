@@ -86,5 +86,6 @@ if __name__ == '__main__':
     print idmap.field('1','RamCropland2000Km2')
     print idmap.field('2','RamCropland2000Km2')
     print idmap.field('3','RamCropland2000Km2')
-    print idmap.field('20','RamCropland2000Km2')
-
+    print idmap.field('2','Runoff_Annual_2000')
+    print idmap.field('2','Runoff25_Annual_2000')
+    print idmap.field('2','Runoff50_Annual_2000')

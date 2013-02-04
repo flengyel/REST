@@ -174,16 +174,12 @@ def subbasinPerimeter(maps, key, order):
 
 
 if __name__ == '__main__':
-#	t = { 1 : [2, 3], 2 : [4, 5], 3 : [6], 4 : [], 5 : [], 6 : [] }
-#	bfs(t, 1)
-#       maps = loadmaps("NigerShapefiles/NigerRiverDict")
-#       print traverse(maps, 220)
         print 'Loading cPickle map'
 	bigmap = loadmaps(Const.DICTIONARY)
-	print 'traversal'
-	print traverseStrahler(bigmap, 1640, 5)  # this should be the same
+#	print 'traversal'
+#	print traverseStrahler(bigmap, 1640, 5)  # this should be the same
 	print 'perimeter'
-	print subbasinPerimeter(bigmap, 1640, 5)
+	print subbasinPerimeter(bigmap, 1727, 1)
 #       print 'Connecting to redis'
 ##	r = redis.StrictRedis(host='localhost', port=6379, db=0)
 #       print 'Traversal 1'
