@@ -30,12 +30,13 @@ def	_traverseStrahler(maps, key, order):
 
 def	_histo1(maps, myIDmap, key, order, myField, bins):
 	tree=maps[0]
-	nodelist=[]
+	vlist=[]
 	q = Queue.Queue()
 	q.put(key)
 	mini=myIDmap.field(key, myField)  # should be an integer field or else
 	maxi=mini   # set min = max.
 	count = 0
+        avg = 0
 	while not q.empty():
 	    node  = q.get()
 	    value = myIDmap.field(node,myField)
@@ -43,16 +44,21 @@ def	_histo1(maps, myIDmap, key, order, myField, bins):
 		count += 1
 		mini  = min(mini,value)
 		maxi  = max(maxi,value)
-		nodelist.append((node,value))	# append node ID and the value for next pass
+                avg  += value
+		vlist.append(value)	# append node ID and the value for next pass
 	    for k in tree[node]:		# you may want to traverse upstream in any case - debatable
 		if k[1] >= order:
 	            q.put(k[0])
 	width = (maxi-mini)/bins
+        if count > 0:
+          avg = avg / count
+        else:
+          avg = (maxi + mini) * 0.5  # cheat
 	# correct if the min and max values are equal
 	if width <= 0:
 		width=1
 		bins=1
-	return ( count, width, bins, mini, maxi, nodelist )		
+	return ( count, width, bins, mini, maxi, avg, vlist )		
 
 # borrowed from stackoverflow, where it was named batch_gen
 # http://stackoverflow.com/questions/760753/iterate-over-a-python-sequence-in-multiples-of-n
@@ -64,8 +70,7 @@ def iterate_by_n(data, n):
             yield data[i:i+n]
 
 def	_histo2(arglist):
-	count, width, bins, mini, maxi, nodelist = arglist
-	print count, width, bins, mini, maxi
+	count, width, bins, mini, maxi, avg, nodelist = arglist
 
 	frequencies = [0]*bins
 	endpoints   = [mini]*(bins+1)
@@ -75,18 +80,15 @@ def	_histo2(arglist):
 	    j = i+1
 	    endpoints[j] = endpoints[j]+j*width
 	
-	for pair in nodelist:
-	    ID = pair[0]
-	    value = pair[1]
+	for value in nodelist:
 	    index = int((value-mini)/width)
 	    if index >= bins:
 		index = bins-1  # index correction -- this happens at the last interval
 	    frequencies[index] += 1
-	    IDValBinList.append((ID, value, index))    
-	return (count, frequencies, endpoints, IDValBinList)
+	return (count, frequencies, endpoints, mini, avg, maxi)
 
 def	histogram(maps, myIDmap, key, order, myField, bins):
-	"""Returns count, freq array, bin endpints, (ID, Value, Bin) list"""
+	"""Returns count, freq array, bin endpoints, (ID, Value, Bin) list"""
 	return _histo2(_histo1(maps, myIDmap, key, order, myField, bins))
 
 if __name__ == '__main__':
@@ -109,7 +111,7 @@ if __name__ == '__main__':
 #	count, frequencies, endpoints, _ = histogram(maps, myIDmap, 202, 3, 'GRUMP_Pop_2000', 50)
 # bad field produces error case of 0 1 1 -9999.0 -9999.0
 #	count, frequencies, endpoints, _ = histogram(maps, myIDmap, 202, 3, 'runoff_10', 50)
-	count,frequencies, endpoints, _ = histogram(maps, myIDmap, 202, 3, 'Runoff-10', 25)
+	count,frequencies, endpoints, maxi, avg, mini = histogram(maps, myIDmap, 202, 3, 'Runoff-10', 25)
 	ends = numpy.array(endpoints)
 	freqs = numpy.array(frequencies)
         x = .5*(ends[1:]+ends[:-1])
@@ -126,6 +128,9 @@ if __name__ == '__main__':
 	print 'derived output:'
 	print 'bin midpoints:', x
 	print 'proportions within each bin:', y
+	print 'minimum:', mini
+        print 'average:', avg
+	print 'maximum:', maxi
 
 	# plot barchart with a red line
 	p.plot(x, y, 'r', linewidth=1)
@@ -136,7 +141,7 @@ if __name__ == '__main__':
 	p.show()
 
 # This has NOVALUE in a few segments	
-	count,frequencies, endpoints, _ = histogram(maps, myIDmap, 1, 3, 'RamCropland2000Km2', 25)
+	count,frequencies, endpoints, mini, avg, maxi = histogram(maps, myIDmap, 1, 3, 'RamCropland2000Km2', 25)
 	ends = numpy.array(endpoints)
 	freqs = numpy.array(frequencies)
         x = .5*(ends[1:]+ends[:-1])

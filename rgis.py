@@ -115,7 +115,7 @@ def AfricaNigerAnnualPhosphorous(cell):
 # def histog"""Returns count, freq array, bin endpoints, (ID, Value, Bin) list"""
 @app.route('/Africa/Niger/Hist/<int:cell>/<int:order>/<field>/<int:bins>')
 def AfricaNigerHistogram(cell,order,field,bins):
-    count, frequencies, endpoints, _ = histogram(myMaps, myIDmap, cell, order,field, bins)
+    count, frequencies, endpoints, mini, avg, maxi = histogram(myMaps, myIDmap, cell, order,field, bins)
     ends = numpy.array(endpoints)
     midpoints = 0.5*(ends[1:]+ends[:-1])
     freqs = numpy.array(frequencies)
@@ -125,7 +125,8 @@ def AfricaNigerHistogram(cell,order,field,bins):
                         'freqs': frequencies,
                         'endpoints' : endpoints, 
 	                'midpoints' : list(midpoints), 
-                        'proportions' : list(props) })
+                        'proportions' : list(props),
+                        'min' : mini, 'avg' : avg, 'max' : maxi })
 
 
 
